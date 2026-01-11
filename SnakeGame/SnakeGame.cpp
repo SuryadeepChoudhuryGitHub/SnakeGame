@@ -25,6 +25,7 @@ void refresh_game(void);
 const int SPEED = 10;
 const int HEIGHT = 25;
 const int WIDTH = 25;
+const char SNAKE = 'S';
 
 vector<vector<int>> snake = {};
 
@@ -99,7 +100,7 @@ void gotopos(int x, int y) {
 
 void draw_player(int x, int y) {
 	gotopos(2 + x*2, 1 + y);
-	cout << "S";
+	cout << SNAKE;
 	return;
 }
 
@@ -112,8 +113,26 @@ void add_first_apple(void) {
     cout << "a";
 }
 void add_apple(void) {
-    apple_pos_x = random_picker(0, WIDTH);
-    apple_pos_y = random_picker(0, HEIGHT);
+    while (true) {
+        
+        int pos_x = random_picker(0, WIDTH);
+        int pos_y = random_picker(0, HEIGHT);
+        bool in_tail = false;
+        for (int i = 0; i < snake.size(); i++) {
+            if (pos_x == snake[i][0] && pos_y == snake[i][1]) {
+                in_tail = true;
+                break;
+            }
+        }
+        if (in_tail || (pos_x == player_pos_x && pos_y == player_pos_y)) {
+            continue;
+        }
+        else {
+            apple_pos_x = pos_x;
+            apple_pos_y = pos_y;
+            break;
+        }
+    }
     gotopos(2 + apple_pos_x * 2, 1 + apple_pos_y); // go to a random position
     cout << "a";
     return;
@@ -121,7 +140,8 @@ void add_apple(void) {
 
 void remove_apple(int x, int y) {
     gotopos(2 + x * 2, 1 + y);
-    cout << "S";
+    apple_pos_x = 0; apple_pos_y = 0;
+    cout << SNAKE;
     return;
 }
 void spawn_apple(char direc) {   
@@ -198,12 +218,11 @@ void check_direction(void) {
             break;
         }
         this_thread::sleep_for(chrono::milliseconds(1000 / SPEED));
+        store_snake_pos();
         if (player_pos_x == apple_pos_x && player_pos_y == apple_pos_y) {
-            store_snake_pos();
             spawn_apple(current_direction);
         }
         else {
-            store_snake_pos();
             remove_end();
         }
         
@@ -266,20 +285,20 @@ bool check_collision(void) {
     for (int i = 0; i < snake.size(); i++) {
         if (player_pos_x == snake[i][0] && player_pos_y == snake[i][1]) {
             gotopos(2 + cashex * 2, 1 + cashey);
-            cout << "S";
+            cout << SNAKE;
             return true;
         } 
     }
     if (player_pos_y == HEIGHT+ 1 || player_pos_y == -1) {
         gotopos(2 + cashex * 2, 1 + cashey);
-        cout << "S";
+        cout << SNAKE;
         gotopos(2 + player_pos_x * 2, 1 + player_pos_y);
         cout << "-";
         return true;
     }
     else if (player_pos_x == WIDTH + 1 || player_pos_x == -1) {
         gotopos(2 + cashex * 2, 1 + cashey);
-        cout << "S";
+        cout << SNAKE;
         gotopos(2 + player_pos_x * 2, 1 + player_pos_y);
         cout << "|";
         return true;
@@ -292,5 +311,3 @@ void display_game_over(void) {
     cout << "Game Over";
     gotopos(0, 2 + HEIGHT);
 }
-
-
