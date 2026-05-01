@@ -5,6 +5,7 @@
 #include <thread>
 #include <vector>
 #include <variant>
+#include <string>
 
 using namespace std;
 
@@ -13,19 +14,21 @@ int random_picker(int a, int b);
 
 void gotopos(int x, int y);
 void check_direction(void);
-void draw_player(int x, int y);
+void draw_player(int x, int y, char direction);
 void draw_borders();
 //void spawn_apple();
 void add_first_apple();
 void store_snake_pos();
-bool check_collision(void);
+bool check_collision(char direction);
 void display_game_over(void);
 void refresh_game(void);
+void death_animation(void);
+void variant_selector(char direction);
 
 const int SPEED = 10;
 const int HEIGHT = 25;
 const int WIDTH = 25;
-const char SNAKE = 'S';
+const vector<string> SNAKE = { "-", "|" };
 
 vector<vector<int>> snake = {};
 
@@ -91,17 +94,26 @@ void refresh_game(void) {
 }
 
 void gotopos(int x, int y) {
-	COORD coordinate;
-	coordinate.X = x;
-	coordinate.Y = y;
-	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinate);
+    COORD coordinate;
+    coordinate.X = x;
+    coordinate.Y = y;
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coordinate);
 
 }
 
-void draw_player(int x, int y) {
-	gotopos(2 + x*2, 1 + y);
-	cout << SNAKE;
-	return;
+void draw_player(int x, int y, char direction) {
+    gotopos(2 + x * 2, 1 + y);
+    variant_selector(direction);
+    return;
+}
+
+void variant_selector(char direction) {
+    if (direction == 's' || direction == 'w') {
+        cout << SNAKE[1];
+    }
+    else if (direction == 'a' || direction == 'd') {
+        cout << SNAKE[0];
+    }
 }
 
 //================================APPLE SPAWNING==========================================
@@ -114,7 +126,7 @@ void add_first_apple(void) {
 }
 void add_apple(void) {
     while (true) {
-        
+
         int pos_x = random_picker(0, WIDTH);
         int pos_y = random_picker(0, HEIGHT);
         bool in_tail = false;
@@ -138,14 +150,14 @@ void add_apple(void) {
     return;
 }
 
-void remove_apple(int x, int y) {
+void remove_apple(int x, int y, char direction) {
     gotopos(2 + x * 2, 1 + y);
     apple_pos_x = 0; apple_pos_y = 0;
-    cout << SNAKE;
+    variant_selector(direction);
     return;
 }
-void spawn_apple(char direc) {   
-    remove_apple(player_pos_x, player_pos_y);
+void spawn_apple(char direc) {
+    remove_apple(player_pos_x, player_pos_y, direc);
     add_apple();
     score++;
     gotopos(62, 0);
@@ -159,6 +171,7 @@ void move_down(void);
 void move_left(void);
 void move_right(void);
 void remove_end();
+
 
 void check_direction(void) {
     char direction = 'd';
@@ -213,7 +226,8 @@ void check_direction(void) {
             }
 
         }
-        if (check_collision()) {
+        if (check_collision(current_direction)) {
+            death_animation();
             display_game_over();
             break;
         }
@@ -225,14 +239,14 @@ void check_direction(void) {
         else {
             remove_end();
         }
-        
+
     }
 }
 
 void move_up(void) {
     if (player_pos_y >= 0) {
         player_pos_y--;
-        draw_player(player_pos_x, player_pos_y);
+        draw_player(player_pos_x, player_pos_y, 'w');
     }
     return;
 }
@@ -240,7 +254,7 @@ void move_up(void) {
 void move_down(void) {
     if (player_pos_y <= HEIGHT) {
         player_pos_y++;
-        draw_player(player_pos_x, player_pos_y);
+        draw_player(player_pos_x, player_pos_y, 's');
     }
     return;
 }
@@ -248,7 +262,7 @@ void move_down(void) {
 void move_left(void) {
     if (player_pos_x >= 0) {
         player_pos_x--;
-        draw_player(player_pos_x, player_pos_y);
+        draw_player(player_pos_x, player_pos_y, 'a');
     }
     return;
 }
@@ -256,7 +270,7 @@ void move_left(void) {
 void move_right(void) {
     if (player_pos_x <= WIDTH) {
         player_pos_x++;
-        draw_player(player_pos_x, player_pos_y);
+        draw_player(player_pos_x, player_pos_y, 'd');
     }
     return;
 }
@@ -272,7 +286,7 @@ void remove_end() {
 }
 
 void store_snake_pos(void) {
-    vector<int> body_pos= {};
+    vector<int> body_pos = {};
     body_pos.push_back(player_pos_x);
     body_pos.push_back(player_pos_y);
     snake.push_back(body_pos);
@@ -281,24 +295,24 @@ void store_snake_pos(void) {
 
 //===========================================CHECK COLLISION====================================
 
-bool check_collision(void) {
+bool check_collision(char direction) {
     for (int i = 0; i < snake.size(); i++) {
         if (player_pos_x == snake[i][0] && player_pos_y == snake[i][1]) {
             gotopos(2 + cashex * 2, 1 + cashey);
-            cout << SNAKE;
+            variant_selector(direction);
             return true;
-        } 
+        }
     }
-    if (player_pos_y == HEIGHT+ 1 || player_pos_y == -1) {
+    if (player_pos_y == HEIGHT + 1 || player_pos_y == -1) {
         gotopos(2 + cashex * 2, 1 + cashey);
-        cout << SNAKE;
+        variant_selector(direction);
         gotopos(2 + player_pos_x * 2, 1 + player_pos_y);
         cout << "-";
         return true;
     }
     else if (player_pos_x == WIDTH + 1 || player_pos_x == -1) {
         gotopos(2 + cashex * 2, 1 + cashey);
-        cout << SNAKE;
+        variant_selector(direction);
         gotopos(2 + player_pos_x * 2, 1 + player_pos_y);
         cout << "|";
         return true;
@@ -310,4 +324,19 @@ void display_game_over(void) {
     gotopos((2 + WIDTH * 2) / 2 - 4, (1 + HEIGHT) / 2);
     cout << "Game Over";
     gotopos(0, 2 + HEIGHT);
+}
+
+//====================ANIMATION===========================================
+void death_animation(void) {
+    gotopos(2 + cashex * 2, 1 + cashey);
+    cout << " ";
+    for (int i = 0; i < snake.size(); i++) {
+        gotopos(2 + snake[i][0] * 2, 1 + snake[i][1]);
+        cout << " ";
+        cashex = snake[i][0];
+        cashey = snake[i][1];
+        //snake.erase(snake.begin());
+        this_thread::sleep_for(chrono::milliseconds(500 / snake.size()));
+    }
+    return;
 }
